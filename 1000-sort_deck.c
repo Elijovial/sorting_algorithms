@@ -1,141 +1,124 @@
 #include "deck.h"
 
-int _strcmp(const char *s1, const char *s2);
-char get_value(deck_node_t *card);
-void insertion_sort_deck_kind(deck_node_t **deck);
-void insertion_sort_deck_value(deck_node_t **deck);
-void sort_deck(deck_node_t **deck);
-
+#include <stdio.h>
+void sort_suit(deck_node_t **deck);
+void sort_val(deck_node_t **deck);
+void swap(deck_node_t **deck, deck_node_t *card1, deck_node_t *card2);
+int vcmp(const card_t *card1, const card_t *card2);
 /**
- * _strcmp - Compares two strings.
- * @s1: The first string to be compared.
- * @s2: The second string to be compared.
+ * sort_deck - sorts a 52 card deck
+ * @deck: deck to sort
  *
- * Return: Positive byte difference if s1 > s2
- *         0 if s1 == s2
- *         Negative byte difference if s1 < s2
- */
-int _strcmp(const char *s1, const char *s2)
-{
-	while (*s1 && *s2 && *s1 == *s2)
-	{
-		s1++;
-		s2++;
-	}
-
-	if (*s1 != *s2)
-		return (*s1 - *s2);
-	return (0);
-}
-
-/**
- * get_value - Get the numerical value of a card.
- * @card: A pointer to a deck_node_t card.
- *
- * Return: The numerical value of the card.
- */
-char get_value(deck_node_t *card)
-{
-	if (_strcmp(card->card->value, "Ace") == 0)
-		return (0);
-	if (_strcmp(card->card->value, "1") == 0)
-		return (1);
-	if (_strcmp(card->card->value, "2") == 0)
-		return (2);
-	if (_strcmp(card->card->value, "3") == 0)
-		return (3);
-	if (_strcmp(card->card->value, "4") == 0)
-		return (4);
-	if (_strcmp(card->card->value, "5") == 0)
-		return (5);
-	if (_strcmp(card->card->value, "6") == 0)
-		return (6);
-	if (_strcmp(card->card->value, "7") == 0)
-		return (7);
-	if (_strcmp(card->card->value, "8") == 0)
-		return (8);
-	if (_strcmp(card->card->value, "9") == 0)
-		return (9);
-	if (_strcmp(card->card->value, "10") == 0)
-		return (10);
-	if (_strcmp(card->card->value, "Jack") == 0)
-		return (11);
-	if (_strcmp(card->card->value, "Queen") == 0)
-		return (12);
-	return (13);
-}
-
-/**
- * insertion_sort_deck_kind - Sort a deck of cards from spades to diamonds.
- * @deck: A pointer to the head of a deck_node_t doubly-linked list.
- */
-void insertion_sort_deck_kind(deck_node_t **deck)
-{
-	deck_node_t *iter, *insert, *tmp;
-
-	for (iter = (*deck)->next; iter != NULL; iter = tmp)
-	{
-		tmp = iter->next;
-		insert = iter->prev;
-		while (insert != NULL && insert->card->kind > iter->card->kind)
-		{
-			insert->next = iter->next;
-			if (iter->next != NULL)
-				iter->next->prev = insert;
-			iter->prev = insert->prev;
-			iter->next = insert;
-			if (insert->prev != NULL)
-				insert->prev->next = iter;
-			else
-				*deck = iter;
-			insert->prev = iter;
-			insert = iter->prev;
-		}
-	}
-}
-
-/**
- * insertion_sort_deck_value - Sort a deck of cards sorted from
- *                             spades to diamonds from ace to king.
- * @deck: A pointer to the head of a deck_node_t doubly-linked list.
- */
-void insertion_sort_deck_value(deck_node_t **deck)
-{
-	deck_node_t *iter, *insert, *tmp;
-
-	for (iter = (*deck)->next; iter != NULL; iter = tmp)
-	{
-		tmp = iter->next;
-		insert = iter->prev;
-		while (insert != NULL &&
-		       insert->card->kind == iter->card->kind &&
-		       get_value(insert) > get_value(iter))
-		{
-			insert->next = iter->next;
-			if (iter->next != NULL)
-				iter->next->prev = insert;
-			iter->prev = insert->prev;
-			iter->next = insert;
-			if (insert->prev != NULL)
-				insert->prev->next = iter;
-			else
-				*deck = iter;
-			insert->prev = iter;
-			insert = iter->prev;
-		}
-	}
-}
-
-/**
- * sort_deck - Sort a deck of cards from ace to king and
- *             from spades to diamonds.
- * @deck: A pointer to the head of a deck_node_t doubly-linked list.
+ * Return: Always 0 (ok)
  */
 void sort_deck(deck_node_t **deck)
 {
-	if (deck == NULL || *deck == NULL || (*deck)->next == NULL)
+	if (deck == NULL || *deck == NULL)
 		return;
+	sort_suit(deck);
+	sort_val(deck);
+}
 
-	insertion_sort_deck_kind(deck);
-	insertion_sort_deck_value(deck);
+/**
+ * sort_suit - sorts a 52 card deck by suit
+ * @deck: deck to sort
+ */
+void sort_suit(deck_node_t **deck)
+{
+	deck_node_t *forw, *tmp;
+
+	for (forw = (*deck)->next; forw && forw->prev; forw = forw->next)
+	{
+		for (; forw && forw->prev && forw->card->kind <
+			     forw->prev->card->kind; forw = forw->prev)
+		{
+			tmp = forw->prev;
+			swap(deck, tmp, forw);
+			forw = forw->next;
+		}
+	}
+}
+
+/**
+ * sort_val - sorts a 52 card deck staticly by value
+ * @deck: deck to sort
+ */
+void sort_val(deck_node_t **deck)
+{
+	deck_node_t *f, *tmp;
+
+	for (f = (*deck)->next; f && f->prev; f = f->next)
+	{
+		for (; f && f->prev && vcmp(f->card, f->prev->card) &&
+			     f->card->kind == f->prev->card->kind;
+		     f = f->prev)
+		{
+			tmp = f->prev;
+			swap(deck, tmp, f);
+			f = f->next;
+		}
+	}
+}
+/**
+ * swap - swaps 2 consecutive cards of a doubly linked list
+ * Used in the insertion algorithm
+ * @deck: Head node for the deck
+ * @card1: The first card to swap
+ * @card2: The second card to swap
+ */
+void swap(deck_node_t **deck, deck_node_t *card1, deck_node_t *card2)
+{
+	deck_node_t *prev, *next;
+
+	prev = card1->prev;
+	next = card2->next;
+
+	if (prev != NULL)
+		prev->next = card2;
+	else
+		*deck = card2;
+	card1->prev = card2;
+	card1->next = next;
+	card2->prev = prev;
+	card2->next = card1;
+	if (next)
+		next->prev = card1;
+}
+
+/**
+ * vcmp - compares 2 card values
+ * @card1: The first card to compare
+ * @card2: The second card to compare
+ *
+ * Return: 1 if less than, 0 if greater or equal to
+ */
+int vcmp(const card_t *card1, const card_t *card2)
+{
+	char char1 = card1->value[0], char2 = card2->value[0];
+	const char *ord[14] = {"Ac", "1", "2", "3", "4", "5", "6",
+			       "7", "8", "9", "10", "Ja", "Qu", "Ki"};
+	int idx1 = 0, idx2 = 0, i;
+
+	if ((char1 >= 48 && char1 <= 57) && (char2 >= 49 &&
+					     char2 <= 57))
+	{
+		if (card1->value[1] == '0')
+			char1 = 58;
+		if (card2->value[1] == '0')
+			char2 = 58;
+		return (char1 < char2);
+	}
+	else
+	{
+		for (i = 0; i < 14; i++)
+		{
+			if (card1->value[0] == ord[i][0] &&
+			    card1->value[1] == ord[i][1])
+				idx1 = i;
+			if (card2->value[0] == ord[i][0] &&
+			    card2->value[1] == ord[i][1])
+				idx2 = i;
+		}
+		return (idx1 < idx2);
+	}
 }
