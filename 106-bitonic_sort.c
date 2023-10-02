@@ -1,3 +1,8 @@
+/*
+ * File: 106-bitonic_sort.c
+ * Auth: Bilyamin Abdullahi Ahmad
+ */
+
 #include "sort.h"
 
 void swap_ints(int *a, int *b);
@@ -89,3 +94,4 @@ void bitonic_sort(int *array, size_t size)
 
 	bitonic_seq(array, size, 0, size, UP);
 }
+
